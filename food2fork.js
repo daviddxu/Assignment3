@@ -16,7 +16,7 @@ To Test: Use browser to view http://localhost:3000/
 let http = require('http')
 let url = require('url')
 let qstring = require('querystring')
-var ingredientName = ''
+var ingredientNames = ''
 
 const PORT = process.env.PORT || 3000
 //Please register for your own key replace this with your own.
@@ -26,7 +26,7 @@ function sendResponse(recipeData, res){
   var page = '<html><head><title>API Example</title></head>' +
     '<body>' +
     '<form method="post">' +
-    'Enter an ingredient: <input name="ingredients"><br>' +
+    'Ingredients: <input name="ingredients"><br>' +
     '<input type="submit" value="Get Recipes">' +
     '</form>'
   if(recipeData){
@@ -34,7 +34,7 @@ function sendResponse(recipeData, res){
 	 var ingredient = recipeData
 	 console.log(recipeData);
 	// console.log("city: ", city);
-  page += '<h1>Recipes for ' + ingredientName + '</h1>'  + '<p>' + recipeData +'</p>'  }
+  page += '<h1>Recipes for ' + ingredientNames + '</h1>'  + '<p>' + recipeData +'</p>'  }
   page += '</body></html>'    
   res.end(page);
 }
@@ -45,12 +45,11 @@ function parseData(recipeResponse, res) {
     recipeData += chunk
   })
   recipeResponse.on('end', function () {
-	  console.log("recipeData: ", recipeData);
     sendResponse(recipeData, res)
   })
 }
 
-function getRecipes(ingredient, res){
+function getRecipes(ingredients, res){
 
 //New as of 2015: you need to provide an appid with your request.
 //Many API services now require that clients register for an app id.
@@ -58,7 +57,7 @@ function getRecipes(ingredient, res){
 //Make an HTTP GET request to the openweathermap API
   const options = {
     host: 'www.food2fork.com',
-    path: `/api/search?q=${ingredient}&key=${API_KEY}`
+    path: `/api/search?q=${ingredients}&key=${API_KEY}`
 
   }
   http.request(options, function(apiResponse){
@@ -76,53 +75,25 @@ http.createServer(function (req, res) {
   if (req.method == "POST"){
     let reqData = ''
     req.on('data', function (chunk) {
-	  console.log("reqData: ", reqData);
-	  console.log("chunk: ", chunk);
       reqData += chunk
     })
     req.on('end', function() {
-	 // console.log("reqData: ", reqData);
-	  var queryParams = reqData.split();
-	  console.log("QueryParams: ", queryParams);
-	  
-	  
-     // var queryParams = qstring.parse(reqData)
+	  console.log(reqData);
+      var queryParams = qstring.parse(reqData)
 	  console.log("queryParams: ", queryParams)
-	  console.log("queryParams.ingredient: ", queryParams.ingredient);
-	  ingredientName = queryParams.ingredient;
-	  
-	  //for loop to run getRecipes for every ingredient in the array
-      getRecipes(queryParams.ingredient, res)
+	  console.log("queryParams.ingredients: ", queryParams.ingredients);
+	  ingredientNames = queryParams.ingredients;
+      getRecipes(queryParams.ingredients, res)
     })
   } else if(req.method == "GET"){	//parse name
   
-	  var queryParams = qstring.parse(query);
-	  console.log("queryParams: ", queryParams);
-	  console.log("queryParams.ingredients: ", queryParams.ingredients);
-	  var ingredientsStr = queryParams.ingredients;
-	  console.log("ingredientsStr: ", ingredientsStr)
-	  //if there is a comma, put it into an array
-	if(typeof ingredientsStr != 'undefined' ){	
-	if(ingredientsStr.indexOf(",") != -1){
-	 var ingredientsArray = ingredientsStr.split(',');
-	  console.log("ingredientsArray: ", ingredientsArray)
-	  
-	  for(var i = 0; i < ingredientsArray.length; i++){
-		  getRecipes(ingredientsArray[i], res);
-	  }
-	  
-	}else{
-		getRecipes(ingredientsStr, res);
-	}
-	}
-	  //var queryArray = queryParams.ingredients.split(",");
-	//  console.log("queryArray: ", queryArray);
-	 // var queryParams =  qstring.parse(query)
+	
+	  var queryParams =  qstring.parse(query)
 	//  console.log("queryParams (GET): ", queryParams)
 	
-	//ingredientName = queryParams.ingredient;
+	ingredientNames = queryParams.ingredients;
 	   
-	 // getRecipes(queryParams.ingredient, res)
+	  getRecipes(queryParams.ingredients, res)
   }else{
     sendResponse(null, res)
   }
